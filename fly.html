@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Fly!</title>
+    <script src="https://aframe.io/releases/1.0.3/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component/dist/aframe-environment-component.min.js"></script>
+
+    <script>
+      AFRAME.registerComponent('pilot', {
+        tick: function() {
+          const rig = document.querySelector('#rig').object3D;
+          const direction = new THREE.Vector3();
+
+          this.el.object3D.getWorldDirection(direction);
+          console.log('What I want');
+          console.log(direction);
+
+          const quaternion = new THREE.Quaternion();
+          this.el.object3D.getWorldQuaternion(quaternion);
+
+          const rotation = new THREE.Euler();
+          rotation.setFromQuaternion(quaternion);
+
+          const orientation = new THREE.Vector3(0, 0, -1);
+          orientation.applyEuler(rotation);
+          console.log('What I have');
+          console.log(quaternion);
+          const dirString =
+            quaternion._x + '; ' +
+            quaternion._y + '; ' +
+            quaternion._z;
+
+          // orientation.multiplyScalar(0.1);
+          // // rig.position.x += orientation.x;
+          // // rig.position.y += orientation.y;
+          // rig.position.z += orientation.z;
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene>
+      <a-entity environment="preset: forest; dressingAmount: 500"></a-entity>
+      <a-entity
+        class="text"
+        text="value: test;"
+        scale="5 5 5"
+        position="0 2 -2"
+      ></a-entity>
+
+      <a-entity id="rig">
+        <a-camera pilot></a-camera>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>
