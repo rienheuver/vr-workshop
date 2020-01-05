@@ -12,6 +12,10 @@
 
     <script>
       let speed = 0;
+      let targetDistance = 50;
+      let targetInterval = 50;
+      let randomDistance = 20;
+
       AFRAME.registerComponent('start-game', {
         init: function() {
           setTimeout(() => {
@@ -45,6 +49,9 @@
               score++;
               e.detail.targetEl.remove();
               e.detail.targetEl.components.sound.playSound();
+              speed += 0.02;
+
+              // addTarget(); // make continuous play
 
               if (document.querySelectorAll('.target').length === 0) {
                 const time = Math.round((new Date() - startTime - 5000) / 1000);
@@ -59,21 +66,8 @@
 
       AFRAME.registerComponent('planets', {
         init: function() {
-          const target = document.getElementById('targetTemplate');
-          const scene = document.querySelector('a-scene');
-          const distance = 50;
-          for (let i = 0; i < 20; i++) {
-            const clone = target.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.className = 'target';
-            const newPosition =
-              Math.floor(Math.random() * 2 * distance - distance) +
-              ' ' +
-              Math.floor(Math.random() * 2 * distance - distance) +
-              ' ' +
-              Math.floor(Math.random() * 2 * distance - distance - 200);
-            clone.setAttribute('position', newPosition);
-            scene.appendChild(clone);
+          for (let i = 0; i < 30; i++) {
+            addTarget();
           }
         }
       });
@@ -87,10 +81,27 @@
       function getColor() {
         return 'hsl(' + Math.round(360 * Math.random()) + ',' + '70%,' + '60%)';
       }
+
+      function addTarget() {
+        const scene = document.querySelector('a-scene');
+        const template = document.getElementById('targetTemplate');
+        const clone = template.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.className = 'target';
+        targetDistance += targetInterval;
+        const newPosition =
+          Math.floor(Math.random() * 2 * randomDistance - randomDistance) +
+          ' ' +
+          Math.floor(Math.random() * 2 * randomDistance - randomDistance) +
+          ' ' +
+          -targetDistance;
+        clone.setAttribute('position', newPosition);
+        scene.appendChild(clone);
+      }
     </script>
   </head>
   <body>
-    <a-scene physics="driver: ammo; debug: false" planets start-game>
+    <a-scene physics="driver: ammo; debug: true" planets start-game>
       <a-sky src="space.jpg"></a-sky>
 
       <a-entity id="pilot" pilot>
