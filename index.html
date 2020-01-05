@@ -11,58 +11,82 @@
     <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
 
     <script>
+      let speed = 0;
+      AFRAME.registerComponent('start-game', {
+        init: function() {
+          setTimeout(() => (speed = 0.5), 5000);
+        }
+      });
+
       AFRAME.registerComponent('pilot', {
         tick: function() {
           const camera = document.querySelector('a-camera').object3D;
           const direction = new THREE.Vector3();
 
           camera.getWorldDirection(direction);
-          direction.multiplyScalar(0.1);
+          direction.multiplyScalar(speed);
 
-          // this.el.object3D.position.x -= direction.x;
-          // this.el.object3D.position.y -= direction.y;
-          // this.el.object3D.position.z -= direction.z;
+          this.el.object3D.position.x -= direction.x;
+          this.el.object3D.position.y -= direction.y;
+          this.el.object3D.position.z -= direction.z;
         }
       });
 
       AFRAME.registerComponent('collides', {
         init: function() {
+          let score = 0;
+          let startTime = new Date();
           this.el.addEventListener('collidestart', function(e) {
-            console.log(e.detail.targetEl.id);
+            if (e.detail.targetEl.className) {
+              score++;
+              e.detail.targetEl.remove();
+
+              if (document.querySelectorAll('.target').length === 0) {
+                const time = Math.round((new Date() - startTime - 5000) / 1000);
+                const timeText = `Your time: ${time} seconds`;
+                const text = document.getElementById('scoreText');
+                text.setAttribute('text', { value: timeText });
+              }
+            }
           });
         }
       });
 
-      AFRAME.registerComponent('planes', {
+      AFRAME.registerComponent('planets', {
         init: function() {
-          const miniPlane = document.getElementById('tester');
+          const target = document.getElementById('targetTemplate');
           const scene = document.querySelector('a-scene');
-          for (let i = 0; i < 20; i++) {
-            const clone = miniPlane.cloneNode(true);            
-            const newPosition = Math.floor(Math.random() * 20 - 10)
-            + " " + Math.floor(Math.random() * 20 - 10)
-            + " " + Math.floor(Math.random() * 20 - 10);
+          const distance = 50;
+          for (let i = 0; i < 5; i++) {
+            const clone = target.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.className = 'target';
+            const newPosition =
+              Math.floor(Math.random() * 2 * distance - distance) +
+              ' ' +
+              Math.floor(Math.random() * 2 * distance - distance) +
+              ' ' +
+              Math.floor(Math.random() * 2 * distance - distance);
             clone.setAttribute('position', newPosition);
             scene.appendChild(clone);
           }
         }
       });
+
+      AFRAME.registerComponent('random-colour', {
+        init: function() {
+          this.el.setAttribute('color', getColor());
+        }
+      });
+
+      function getColor() {
+        return 'hsl(' + Math.round(360 * Math.random()) + ',' + '70%,' + '60%)';
+      }
     </script>
   </head>
   <body>
-    <a-scene physics="driver: ammo; debug: true" planes>
-      <!-- <a-entity environment="preset: forest; dressingAmount: 500"></a-entity> -->
-      <!-- <a-plane
-        position="0 0 -4"
-        rotation="-90 0 0"
-        width="40"
-        height="40"
-        color="#7BC8A4"
-        ammo-body="type: static"
-        ammo-shape="type: box"
-        id="floor"
-      ></a-plane> -->
-      <a-sky color="blue"></a-sky>
+    <a-scene physics="driver: ammo; debug: false" planets start-game>
+      <a-sky src="space.jpg"></a-sky>
 
       <a-entity id="pilot" pilot>
         <a-camera
@@ -78,26 +102,58 @@
             position="0 -1 0"
             rotation="0 180 0"
           ></a-entity>
-        </a-camera>
-      </a-entity>
 
-      <a-entity
-        position="-2 2 1"
-        ammo-body="type: kinematic"
-        ammo-shape="type: cone; fit: manual; halfExtents: 0.1 0.2 0.27; offset: 0 -1 -0.03; cylinderAxis: z; orientation: 0 180 0 1"
-        id="tester"
-      >
-        <a-entity
-          gltf-model="#planeModel"
-          scale="0.05 0.05 0.05"
-          position="0 -1 0"
-          rotation="0 180 0"
-        ></a-entity>
+          <a-entity text="value: " id="scoreText" position="0 0 -1"></a-entity>
+        </a-camera>
       </a-entity>
 
       <a-assets>
         <a-asset-item id="planeModel" src="models/Jet_01.gltf"></a-asset-item>
+
+        <a-entity
+          id="targetTemplate"
+          ammo-body="type: static"
+          ammo-shape="type: cylinder; fit: manual; halfExtents: 5 5 0.75; cylinderAxis: z;"
+          position="0 0 -10"
+          scale="5 5 5"
+        >
+          <a-cylinder height="0.3" rotation="0 90 90" random-colour>
+            <!-- One side facing target -->
+            <a-circle
+              color="white"
+              rotation="90 0 0"
+              position="0 0.2 0"
+              radius="0.7"
+              material="side: double"
+            ></a-circle>
+            <a-circle
+              color="black"
+              rotation="90 0 0"
+              position="0 0.3 0"
+              radius="0.3"
+              material="side: double"
+            ></a-circle>
+
+            <!-- Other side facing target -->
+            <a-circle
+              color="white"
+              rotation="90 0 0"
+              position="0 -0.2 0"
+              radius="0.7"
+              material="side: double"
+            ></a-circle>
+            <a-circle
+              color="black"
+              rotation="90 0 0"
+              position="0 -0.3 0"
+              radius="0.3"
+              material="side: double"
+            ></a-circle>
+          </a-cylinder>
+        </a-entity>
       </a-assets>
     </a-scene>
+
+    <!-- Put templates outside of the scene -->
   </body>
 </html>
